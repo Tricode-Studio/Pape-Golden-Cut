@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    {
+      "source": "/cms-proxy/:path*",
+      "destination": "https://cms.tricode.studio/api/v1/:path*"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+
