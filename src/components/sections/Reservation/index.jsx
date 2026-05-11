@@ -1,12 +1,14 @@
-import { useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ScrollReveal from '../../ui/ScrollReveal';
 import LoadingSpinner from '../../ui/LoadingSpinner';
 import Calendar, { DAYS, MONTHS } from './Calendar';
 import TimeSlots from './TimeSlots';
 import Summary from './Summary';
 import { useCMSEntries } from '../../../hooks/useCMSEntries';
-import { submitPresupuesto } from '../../../api/cms';
+import { createReservation, previewReservation } from '../../../api/cms';
+import { useReservationAvailability } from '../../../hooks/useReservationAvailability';
 import { formatDuration } from '../../../lib/bookingConfig';
+import { dateToKey, toIsoFromDateAndTime } from '../../../lib/reservationAvailability';
 
 
 const SERVICE_ICONS = {
@@ -127,7 +129,41 @@ export default function Reservation({ showToast }) {
 
   const nameRef = useRef(null);
   const phoneRef = useRef(null);
+  const emailRef = useRef(null);
   const notesRef = useRef(null);
+
+  const selectedService = useMemo(
+    () => services.find((service) => service.id === booking.serviceId) ?? services[0] ?? null,
+    [booking.serviceId, services],
+  );
+  const serviceDurationMinutes = Number((selectedService?.fields ?? selectedService ?? {}).durationminutes) || 30;
+  const {
+    booking: bookingPolicy,
+    byDate: availabilityByDate,
+    reasons: availabilityReasons,
+    loading: availabilityLoading,
+    error: availabilityError,
+  } = useReservationAvailability({
+    month: booking.calMonth,
+    year: booking.calYear,
+    serviceDurationMinutes,
+  });
+
+  const selectedDateKey = booking.date ? dateToKey(booking.date) : null;
+  const availableTimes = selectedDateKey ? (availabilityByDate[selectedDateKey] ?? []) : [];
+
+  useEffect(() => {
+    if (!booking.serviceId && services[0]) {
+      setBooking(buildInitialBooking(services[0]));
+    }
+  }, [booking.serviceId, services]);
+
+  useEffect(() => {
+    if (!booking.time) return;
+    if (!availableTimes.includes(booking.time)) {
+      setBooking((prev) => ({ ...prev, time: null }));
+    }
+  }, [availableTimes, booking.time]);
 
   function selectService(s) {
     const f = s.fields ?? s;
@@ -163,30 +199,48 @@ export default function Reservation({ showToast }) {
   async function handleConfirm() {
     const name = nameRef.current?.value.trim();
     const phone = phoneRef.current?.value.trim();
+    const email = emailRef.current?.value.trim();
     const notes = notesRef.current?.value.trim();
 
     if (!booking.date) { showToast('Por favor seleccioná un día', true); return; }
     if (!booking.time) { showToast('Por favor seleccioná una hora', true); return; }
     if (!name) { showToast('Ingresá tu nombre', true); nameRef.current?.focus(); return; }
     if (!phone) { showToast('Ingresá tu teléfono', true); phoneRef.current?.focus(); return; }
+    if (!email) { showToast('Ingresá tu email', true); emailRef.current?.focus(); return; }
+    if (!availableTimes.includes(booking.time)) { showToast('Ese horario ya no está disponible', true); return; }
 
-    const snapshot = { ...booking, name, phone, notes };
+    const startsAt = toIsoFromDateAndTime(booking.date, booking.time);
+    const endsAt = new Date(new Date(startsAt).getTime() + serviceDurationMinutes * 60000).toISOString();
+    const snapshot = { ...booking, name, phone, email, notes };
     setSubmitting(true);
     try {
-      await submitPresupuesto({
-        name,
-        phone,
-        service: snapshot.service,
-        requestedDate: snapshot.date.toISOString().slice(0, 10),
-        requestedTime: snapshot.time,
+      const preview = await previewReservation({
+        serviceName: snapshot.service,
+        startsAt,
+        endsAt,
+        recurrenceFrequency: 'NONE',
+      });
+      if (!preview?.canCreate) {
+        showToast('Ese horario ya no está disponible. Elegí otro.', true);
+        return;
+      }
+
+      await createReservation({
+        serviceName: snapshot.service,
+        startsAt,
+        endsAt,
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone,
         notes: notes || undefined,
       });
-    } catch (err) {
-      console.error('[CMS] presupuestos POST failed:', err.message);
-    } finally {
-      setSubmitting(false);
       setConfirmed(snapshot);
       showToast('¡Reserva registrada correctamente!');
+    } catch (err) {
+      console.error('[CMS] reservation create failed:', err.message);
+      showToast('No se pudo registrar la reserva. Intentá nuevamente.', true);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -266,7 +320,14 @@ export default function Reservation({ showToast }) {
                   onSelect={selectDate}
                   onPrev={prevMonth}
                   onNext={nextMonth}
+                  availabilityByDate={availabilityByDate}
+                  reasonsByDate={availabilityReasons}
                 />
+                {availabilityError ? (
+                  <p className="slots-hint" style={{ marginTop: 12 }}>
+                    No pudimos sincronizar disponibilidad en tiempo real. Mostrando disponibilidad estimada.
+                  </p>
+                ) : null}
               </div>
 
               {/* STEP 3: TIME */}
@@ -279,6 +340,8 @@ export default function Reservation({ showToast }) {
                   selectedDate={booking.date}
                   selectedTime={booking.time}
                   onSelect={selectTime}
+                  slots={availableTimes}
+                  loading={availabilityLoading}
                 />
               </div>
 
@@ -300,6 +363,12 @@ export default function Reservation({ showToast }) {
                 </div>
                 <div className="form-grid full" style={{ marginTop: 16 }}>
                   <div className="field">
+                    <label htmlFor="custEmail">Email</label>
+                    <input id="custEmail" type="email" ref={emailRef} placeholder="juan@email.com" autoComplete="email" />
+                  </div>
+                </div>
+                <div className="form-grid full" style={{ marginTop: 16 }}>
+                  <div className="field">
                     <label htmlFor="custNotes">Notas adicionales (opcional)</label>
                     <textarea id="custNotes" ref={notesRef} placeholder="Ej: corte navaja en los costados, barba corta…" />
                   </div>
@@ -312,7 +381,7 @@ export default function Reservation({ showToast }) {
                     <path d="M12 2 L4 6 V12 Q4 18 12 22 Q20 18 20 12 V6 Z"/>
                     <path d="M9 12 L11 14 L15 10"/>
                   </svg>
-                  Nos comunicaremos para confirmar el turno.
+                  Horarios según agenda real del CMS ({bookingPolicy.timezone}).
                 </div>
                 <button type="button" className="btn btn-solid" onClick={handleConfirm} disabled={submitting}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

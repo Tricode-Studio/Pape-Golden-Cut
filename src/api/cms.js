@@ -5,8 +5,8 @@
  * Schema snapshot: 2026-05-08
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL; // "/cms-proxy"
-const TENANT   = 'pape-golden-cuts';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/cms-proxy').trim(); // "/cms-proxy"
+const TENANT   = (import.meta.env.VITE_TENANT_SLUG || 'pape-golden-cuts').trim();
 const TIMEOUT_MS  = 8000;
 const MAX_ATTEMPTS = 3; // 1 initial + 2 retries
 
@@ -228,6 +228,53 @@ export const getBarberServices  = () => getEntries('barber-services').then(parse
 export const getBookingRules    = () => getEntries('booking-rules').then(parseEntriesResponse);
 /** @returns {Promise<CMSEntry[]>} */
 export const getAnnouncements   = () => getEntries('announcements').then(parseEntriesResponse);
+
+/**
+ * @param {string} from - YYYY-MM-DD
+ * @param {string} to - YYYY-MM-DD
+ */
+export function getReservationAvailability(from, to) {
+  const params = new URLSearchParams({ from, to });
+  return apiRequest(
+    `${API_BASE}/public/${TENANT}/reservations/availability?${params.toString()}`
+  );
+}
+
+/**
+ * @param {{
+ *   serviceName:string,
+ *   startsAt:string,
+ *   endsAt:string,
+ *   recurrenceFrequency?:'NONE'|'DAILY'|'WEEKLY'|'MONTHLY',
+ *   recurrenceInterval?:number,
+ *   recurrenceCount?:number,
+ *   recurrenceUntil?:string
+ * }} payload
+ */
+export function previewReservation(payload) {
+  return apiRequest(`${API_BASE}/public/${TENANT}/reservations/preview`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * @param {{
+ *   serviceName:string,
+ *   startsAt:string,
+ *   endsAt:string,
+ *   customerName:string,
+ *   customerEmail:string,
+ *   customerPhone?:string,
+ *   notes?:string
+ * }} payload
+ */
+export function createReservation(payload) {
+  return apiRequest(`${API_BASE}/public/${TENANT}/reservations`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
 
 /**
  * POST a reservation / budget request.
