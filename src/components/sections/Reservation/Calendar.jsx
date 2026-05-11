@@ -1,5 +1,3 @@
-import { isBookableDate, isWorkingDay, BOOKING_CONFIG } from '../../../lib/bookingConfig';
-
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MONTHS_SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -7,20 +5,23 @@ const DOW = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 export { MONTHS, MONTHS_SHORT, DAYS };
 
-function disabledTitle(date) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  if (d < today) return 'Fecha pasada';
-  const max = new Date(today);
-  max.setDate(max.getDate() + BOOKING_CONFIG.maxAdvanceDays);
-  if (d > max) return `Reservas hasta ${BOOKING_CONFIG.maxAdvanceDays} días de anticipación`;
-  if (!isWorkingDay(d)) return 'Cerrado ese día';
-  return undefined;
+function toDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
-export default function Calendar({ month, year, selectedDate, onSelect, onPrev, onNext }) {
+export default function Calendar({
+  month,
+  year,
+  selectedDate,
+  onSelect,
+  onPrev,
+  onNext,
+  availabilityByDate = {},
+  reasonsByDate = {},
+}) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -34,10 +35,21 @@ export default function Calendar({ month, year, selectedDate, onSelect, onPrev, 
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month, d);
     date.setHours(0, 0, 0, 0);
-    const bookable = isBookableDate(date);
+    const key = toDateKey(date);
+    const slots = availabilityByDate[key] ?? [];
+    const bookable = slots.length > 0;
     const isToday = date.getTime() === today.getTime();
     const isActive = selectedDate && date.getTime() === selectedDate.getTime();
-    cells.push({ d, date, disabled: !bookable, isToday, isActive, key: `d${d}` });
+    cells.push({
+      d,
+      date,
+      dateKey: key,
+      disabled: !bookable,
+      isToday,
+      isActive,
+      key: `d${d}`,
+      slotsCount: slots.length,
+    });
   }
 
   return (
@@ -61,7 +73,7 @@ export default function Calendar({ month, year, selectedDate, onSelect, onPrev, 
                 key={cell.key}
                 className={cls}
                 onClick={cell.disabled ? undefined : () => onSelect(cell.date)}
-                title={cell.disabled ? disabledTitle(cell.date) : undefined}
+                title={cell.disabled ? (reasonsByDate[cell.dateKey] || 'Sin disponibilidad') : `${cell.slotsCount} horarios`}
               >
                 {cell.d}
               </div>

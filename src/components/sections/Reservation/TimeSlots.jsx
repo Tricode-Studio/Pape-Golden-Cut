@@ -1,11 +1,11 @@
-import { buildSlotsForDate } from '../../../lib/bookingConfig';
-
-export default function TimeSlots({ selectedDate, selectedTime, onSelect }) {
+export default function TimeSlots({ selectedDate, selectedTime, onSelect, slots = [], loading = false }) {
   if (!selectedDate) {
     return <p className="slots-hint">Seleccioná primero una fecha.</p>;
   }
 
-  const slots = buildSlotsForDate(selectedDate);
+  if (loading) {
+    return <p className="slots-hint">Cargando horarios disponibles…</p>;
+  }
 
   if (slots.length === 0) {
     return <p className="slots-hint">No hay disponibilidad para ese día.</p>;
