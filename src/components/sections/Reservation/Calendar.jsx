@@ -92,9 +92,9 @@ export default function Calendar({
           </>
         ) : (
           <>
-            <div className="day-num" style={{ color: 'var(--bg-3)' }}>—</div>
-            <div className="day-name" style={{ color: 'var(--bg-3)' }}>—</div>
-            <div className="month-year" style={{ color: 'var(--bg-3)' }}>Seleccioná un día</div>
+            <div className="day-num" style={{ color: 'rgba(243,236,217,0.2)' }}>—</div>
+            <div className="day-name" style={{ color: 'rgba(243,236,217,0.2)' }}>—</div>
+            <div className="month-year" style={{ color: 'rgba(243,236,217,0.35)' }}>Seleccioná un día</div>
           </>
         )}
       </div>
