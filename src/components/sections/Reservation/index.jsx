@@ -159,6 +159,7 @@ export default function Reservation({ showToast }) {
   const phoneRef = useRef(null);
   const emailRef = useRef(null);
   const notesRef = useRef(null);
+  const autoDateRef = useRef(false);
 
   const selectedService = useMemo(
     () => services.find((service) => service.id === booking.serviceId) ?? services[0] ?? null,
@@ -192,6 +193,32 @@ export default function Reservation({ showToast }) {
       setBooking((prev) => ({ ...prev, time: null }));
     }
   }, [availableTimes, booking.time]);
+
+  // Auto-seleccionar el primer día disponible a partir de hoy
+  useEffect(() => {
+    if (availabilityLoading || autoDateRef.current || booking.date) return;
+    if (booking.service?.trim().toLowerCase() === 'personalizado') return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 60; i++) {
+      const candidate = new Date(today);
+      candidate.setDate(today.getDate() + i);
+      const key = dateToKey(candidate);
+      if (availabilityByDate[key]?.length > 0) {
+        autoDateRef.current = true;
+        setBooking(b => ({
+          ...b,
+          date: candidate,
+          time: null,
+          calMonth: candidate.getMonth(),
+          calYear: candidate.getFullYear(),
+        }));
+        return;
+      }
+    }
+  }, [availabilityLoading, availabilityByDate]);
 
   function selectService(s) {
     const f = s.fields ?? s;

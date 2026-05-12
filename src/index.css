@@ -302,7 +302,7 @@ section { padding: 120px 0; position: relative; }
 .cal-grid .day { aspect-ratio: 1; display: grid; place-items: center; font-family: var(--serif); font-size: 15px; color: var(--cream); cursor: pointer; border: 1px solid transparent; transition: all 0.2s; position: relative; }
 .cal-grid .day:hover:not(.disabled):not(.active) { border-color: var(--line); background: var(--bg-3); }
 .cal-grid .day.empty { cursor: default; }
-.cal-grid .day.disabled { color: var(--bg-3); cursor: not-allowed; }
+.cal-grid .day.disabled { color: rgba(243, 236, 217, 0.22); cursor: not-allowed; }
 .cal-grid .day.today { color: var(--gold); font-weight: 600; }
 .cal-grid .day.active { background: var(--gold); color: var(--bg-0); font-weight: 600; border-color: var(--gold); }
 .selected-date { background: var(--bg-2); border: 1px solid var(--line-soft); padding: 24px 20px; text-align: center; }
