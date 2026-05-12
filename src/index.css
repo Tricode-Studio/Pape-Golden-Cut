@@ -307,7 +307,7 @@ section { padding: 120px 0; position: relative; }
 .form-grid.full { grid-template-columns: 1fr; }
 .field label { display: block; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 .field input, .field textarea { width: 100%; padding: 14px 16px; background: var(--bg-2); border: 1px solid var(--line-soft); color: var(--cream); font-family: var(--sans); font-size: 15px; font-weight: 300; transition: border-color 0.3s; }
-.field input::placeholder, .field textarea::placeholder { color: var(--muted); opacity: 0.6; }
+.field input::placeholder, .field textarea::placeholder { color: rgba(243, 236, 217, 0.38); }
 .field input:focus, .field textarea:focus { outline: none; border-color: var(--gold); background: var(--bg-3); }
 .field textarea { resize: vertical; min-height: 80px; }
 .confirm-row { padding: 28px 32px; background: var(--bg-2); display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
