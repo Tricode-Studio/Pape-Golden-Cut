@@ -84,10 +84,25 @@ export default function Header() {
       <div className={`mobile-nav${menuOpen ? ' open' : ''}`} aria-hidden={!menuOpen}>
         <div className="mobile-nav-backdrop" onClick={close} />
         <nav className="mobile-nav-panel">
-          <a href="#proceso" onClick={close}>Proceso</a>
-          <a href="#servicios" onClick={close}>Servicios</a>
-          <a href="#historia" onClick={close}>Historia</a>
-          <a href="#contacto" onClick={close}>Contacto</a>
+          <button className="mobile-nav-close" onClick={close} aria-label="Cerrar menú">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <line x1="1" y1="1" x2="17" y2="17" stroke="currentColor" strokeWidth="1.5"/>
+              <line x1="17" y1="1" x2="1" y2="17" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+          </button>
+
+          <div className="mobile-nav-brand">
+            <span className="mobile-nav-name">PAPE</span>
+            <span className="mobile-nav-sub">Golden Cut</span>
+          </div>
+
+          <div className="mobile-nav-links">
+            <a href="#proceso" onClick={close}>Proceso</a>
+            <a href="#servicios" onClick={close}>Servicios</a>
+            <a href="#historia" onClick={close}>Historia</a>
+            <a href="#contacto" onClick={close}>Contacto</a>
+          </div>
+
           <a href="#reserva" className="btn btn-solid mobile-nav-cta" onClick={close}>
             Reservar Hora
           </a>
