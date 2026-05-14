@@ -1,5 +1,5 @@
 // Synced from Tricode CMS workspace.booking snapshot — 2026-05-08
-// Source: GET /public/pape-golden-cuts/integration-manifest
+// Source: GET /public/pape-golden-cut/integration-manifest
 
 export const BOOKING_CONFIG = {
   slotMinutes: 30,

@@ -1,12 +1,12 @@
 /**
  * Tricode CMS — Public API client
- * Tenant : pape-golden-cuts
+ * Tenant : pape-golden-cut
  * Proxy  : /cms-proxy → https://cms.tricode.studio/api/v1  (vercel.json rewrite)
  * Schema snapshot: 2026-05-08
  */
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/cms-proxy').trim(); // "/cms-proxy"
-const TENANT   = (import.meta.env.VITE_TENANT_SLUG || 'pape-golden-cuts').trim();
+const TENANT   = (import.meta.env.VITE_TENANT_SLUG || 'pape-golden-cut').trim();
 const TIMEOUT_MS  = 8000;
 const MAX_ATTEMPTS = 3; // 1 initial + 2 retries
 
